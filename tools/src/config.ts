@@ -3,7 +3,7 @@
  * Overridable via MARKETPLACE_BASE_URL for local builds / custom domains.
  */
 export const BASE_URL = (
-  process.env.MARKETPLACE_BASE_URL ?? "https://owncloud.github.io/marketplace"
+  process.env.MARKETPLACE_BASE_URL ?? "https://owncloud.github.io/appstore"
 ).replace(/\/$/, "");
 
 /**
