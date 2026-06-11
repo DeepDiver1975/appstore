@@ -1,5 +1,8 @@
 import semver from "semver";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import type { AppInfo, ApiApp, ApiRelease } from "./types.js";
+import { toApiCategories } from "./categories.js";
 
 /** Provides the ISO-8601 created timestamp for a given appId/version. */
 export type CreatedProvider = (appId: string, version: string) => string;
@@ -69,4 +72,31 @@ export function appsForPlatformVersion(apps: ApiApp[], version: string): ApiApp[
     if (releases.length > 0) result.push({ ...app, releases });
   }
   return result;
+}
+
+async function writeJson(path: string, data: unknown): Promise<void> {
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, JSON.stringify(data, null, 2) + "\n", "utf8");
+}
+
+/**
+ * Write the full static API tree under `outDir`:
+ *   api/v1/categories.json, bundles.json, apps.json,
+ *   api/v1/platform/{version}/apps.json for each known version.
+ */
+export async function writeApi(
+  outDir: string,
+  apps: ApiApp[],
+  knownVersions: string[],
+): Promise<void> {
+  const apiDir = join(outDir, "api", "v1");
+  await writeJson(join(apiDir, "categories.json"), toApiCategories());
+  await writeJson(join(apiDir, "bundles.json"), []);
+  await writeJson(join(apiDir, "apps.json"), apps);
+  for (const version of knownVersions) {
+    await writeJson(
+      join(apiDir, "platform", version, "apps.json"),
+      appsForPlatformVersion(apps, version),
+    );
+  }
 }
