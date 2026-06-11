@@ -34,9 +34,10 @@ describe("parseInfoXml", () => {
   });
 
   it("handles a single category (not an array) and no screenshots", () => {
-    const xml = VALID
-      .replace("<category>productivity</category>", "")
-      .replace("<screenshot>https://example.com/1.png</screenshot>", "");
+    const xml = VALID.replace("<category>productivity</category>", "").replace(
+      "<screenshot>https://example.com/1.png</screenshot>",
+      "",
+    );
     const info = parseInfoXml(xml);
     expect(info.categories).toEqual(["tools"]);
     expect(info.screenshots).toEqual([]);

@@ -15,11 +15,7 @@ async function main(): Promise<void> {
   const baseRef = process.argv[2];
   if (!baseRef) throw new Error("usage: check-changeset <baseRef>");
 
-  const { stdout } = await exec("git", [
-    "diff",
-    "--name-status",
-    `${baseRef}...HEAD`,
-  ]);
+  const { stdout } = await exec("git", ["diff", "--name-status", `${baseRef}...HEAD`]);
   const changed: ChangedPath[] = stdout
     .trim()
     .split("\n")
@@ -38,11 +34,7 @@ async function main(): Promise<void> {
     if (cached !== undefined) return cached;
     let exists = false;
     try {
-      await exec("git", [
-        "cat-file",
-        "-e",
-        `${baseRef}:${releaseDir}/package.tar.gz`,
-      ]);
+      await exec("git", ["cat-file", "-e", `${baseRef}:${releaseDir}/package.tar.gz`]);
       exists = true;
     } catch {
       exists = false;
@@ -61,10 +53,7 @@ async function main(): Promise<void> {
   }
   for (const dir of dirs) await existsOnBase(dir);
 
-  validateChangeset(
-    changed,
-    (releaseDir) => existsCache.get(releaseDir) ?? false,
-  );
+  validateChangeset(changed, (releaseDir) => existsCache.get(releaseDir) ?? false);
   console.log("Changeset OK: no immutability or collision violations.");
 }
 

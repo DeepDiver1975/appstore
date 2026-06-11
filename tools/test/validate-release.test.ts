@@ -38,7 +38,9 @@ describe("validateRelease", () => {
 
   it("rejects when folder appId differs from info.xml <id>", async () => {
     const ref = await release("calendar", "2.1.0", infoXml("kalender", "2.1.0"));
-    await expect(validateRelease(ref)).rejects.toThrow(/id.*calendar.*kalender|kalender.*calendar/i);
+    await expect(validateRelease(ref)).rejects.toThrow(
+      /id.*calendar.*kalender|kalender.*calendar/i,
+    );
   });
 
   it("rejects when folder version differs from info.xml <version>", async () => {

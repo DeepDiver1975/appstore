@@ -3,10 +3,17 @@ import { buildApp, appsForPlatformVersion } from "../src/generate.js";
 import type { AppInfo } from "../src/types.js";
 
 const base: AppInfo = {
-  id: "calendar", name: "Calendar", summary: "s", description: "d",
-  license: "AGPL", author: "ownCloud GmbH", version: "1.0.0",
-  categories: ["tools"], screenshots: ["https://e.com/1.png"],
-  platformMin: "10.0.0", platformMax: "10.99.99",
+  id: "calendar",
+  name: "Calendar",
+  summary: "s",
+  description: "d",
+  license: "AGPL",
+  author: "ownCloud GmbH",
+  version: "1.0.0",
+  categories: ["tools"],
+  screenshots: ["https://e.com/1.png"],
+  platformMin: "10.0.0",
+  platformMax: "10.99.99",
 };
 
 const created = () => "2026-06-11T00:00:00+00:00";
@@ -23,9 +30,12 @@ describe("buildApp", () => {
     expect(app.marketplace).toBe("https://site/apps/calendar");
     expect(app.publisher).toEqual({ name: "ownCloud GmbH", url: "" });
     expect(app.releases[0]).toEqual({
-      platformMin: "10.0.0", platformMax: "10.99.99", version: "1.0.0",
+      platformMin: "10.0.0",
+      platformMax: "10.99.99",
+      version: "1.0.0",
       download: "https://site/apps/calendar/releases/1.0.0/package.tar.gz",
-      license: "AGPL", created: "2026-06-11T00:00:00+00:00",
+      license: "AGPL",
+      created: "2026-06-11T00:00:00+00:00",
     });
   });
 

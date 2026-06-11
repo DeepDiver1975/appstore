@@ -36,9 +36,7 @@ function localizedText(value: unknown): string | undefined {
   if (Array.isArray(value)) {
     if (value.length === 0) return undefined;
     const en = value.find((v) => v && typeof v === "object" && v["@_lang"] === "en");
-    const untagged = value.find(
-      (v) => !(v && typeof v === "object") || v["@_lang"] === undefined,
-    );
+    const untagged = value.find((v) => !(v && typeof v === "object") || v["@_lang"] === undefined);
     return localizedText(en ?? untagged ?? value[0]);
   }
   if (typeof value === "object") {

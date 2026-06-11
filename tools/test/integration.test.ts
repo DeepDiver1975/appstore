@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { createServer, type Server } from "node:http";
-import { readFile, stat } from "node:fs/promises";
+import { stat } from "node:fs/promises";
 import { createReadStream } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -25,7 +25,10 @@ beforeAll(async () => {
     { cwd: toolsDir },
   );
   server = createServer(async (req, res) => {
-    const rel = normalize(decodeURIComponent((req.url ?? "/").split("?")[0])).replace(/^(\.\.[/\\])+/, "");
+    const rel = normalize(decodeURIComponent((req.url ?? "/").split("?")[0])).replace(
+      /^(\.\.[/\\])+/,
+      "",
+    );
     const filePath = join(out, rel);
     try {
       if ((await stat(filePath)).isFile()) {

@@ -11,9 +11,17 @@ afterEach(async () => {
 });
 
 const info: AppInfo = {
-  id: "calendar", name: "Calendar", summary: "s", description: "d",
-  license: "AGPL", author: "me", version: "1.0.0",
-  categories: ["tools"], screenshots: [], platformMin: "10.0.0", platformMax: "10.99.99",
+  id: "calendar",
+  name: "Calendar",
+  summary: "s",
+  description: "d",
+  license: "AGPL",
+  author: "me",
+  version: "1.0.0",
+  categories: ["tools"],
+  screenshots: [],
+  platformMin: "10.0.0",
+  platformMax: "10.99.99",
 };
 
 describe("writeApi", () => {

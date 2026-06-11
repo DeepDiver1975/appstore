@@ -21,7 +21,10 @@ describe("readInfoXmlFromTarball", () => {
   it("returns the info.xml content from appinfo/info.xml", async () => {
     const tarPath = await tempTarPath();
     cleanups.push(
-      await makeTarball(tarPath, { rootDir: "calendar", infoXml: "<info><id>calendar</id></info>" }),
+      await makeTarball(tarPath, {
+        rootDir: "calendar",
+        infoXml: "<info><id>calendar</id></info>",
+      }),
     );
     const xml = await readInfoXmlFromTarball(tarPath);
     expect(xml).toContain("<id>calendar</id>");
