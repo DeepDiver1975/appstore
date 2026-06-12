@@ -1,3 +1,4 @@
+import semver from "semver";
 import { type AppInfo, ValidationError } from "./types.js";
 import { isValidCategory } from "./categories.js";
 import { parseInfoXml } from "./info-xml.js";
@@ -32,6 +33,17 @@ export async function validateRelease(ref: ReleaseRef): Promise<AppInfo> {
         `app "${info.id}" uses unknown category "${cat}" (not a supported marketplace category)`,
       );
     }
+  }
+  const min = semver.coerce(info.platformMin);
+  if (!min) {
+    throw new ValidationError(
+      `app "${info.id}" has an unparseable owncloud min-version "${info.platformMin}"`,
+    );
+  }
+  if (semver.lt(min, "11.0.0")) {
+    throw new ValidationError(
+      `app "${info.id}" requires ownCloud min-version >= 11 (info.xml declares "${info.platformMin}")`,
+    );
   }
   return info;
 }
