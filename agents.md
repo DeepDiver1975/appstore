@@ -33,7 +33,7 @@ source of truth.
 - `.github/workflows/` — `validate.yml` (PR validation of `apps/**`),
   `tools-ci.yml` (lint/test/build for `tools/**` and `website/**`),
   `deploy.yml` (regenerate API + build site + deploy to Pages on push to `main`).
-- `.github/PULL_REQUEST_TEMPLATE/publish-app.md` — submission checklist.
+- `.github/pull_request_template.md` — submission checklist.
 - `.github/dependabot.yml` — github-actions + npm (`/tools`, `/website`), weekly.
 - `.nvmrc` — Node version (20).
 

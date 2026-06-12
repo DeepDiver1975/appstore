@@ -75,7 +75,7 @@ Served as static JSON from GitHub Pages:
 ## Documentation
 
 - Publishing workflow and catalog layout — this README and the
-  [pull request template](.github/PULL_REQUEST_TEMPLATE/publish-app.md)
+  [pull request template](.github/pull_request_template.md)
 - Validator and API generator internals — [`tools/README.md`](tools/README.md)
 
 ## Community & Support

@@ -15,7 +15,7 @@ apps/<app-id>/releases/<version>/package.tar.gz
 ```
 
 All metadata is read from the `appinfo/info.xml` inside the tarball. See the
-[pull request template](.github/PULL_REQUEST_TEMPLATE/publish-app.md) for the
+[pull request template](.github/pull_request_template.md) for the
 full checklist.
 
 ## Code contributions
