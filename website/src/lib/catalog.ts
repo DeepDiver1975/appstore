@@ -1,5 +1,11 @@
 import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
+
+// The API generator writes to ../_site/api/v1 relative to the website root
+// (matching astro.config.mjs `outDir`). Anchor on cwd rather than import.meta.url:
+// `astro dev`/`astro build` both run from the website dir, whereas the build's
+// emitted module location is an internal Astro detail that changed across majors.
+const apiDir = resolve(process.cwd(), "..", "_site", "api", "v1");
 
 export interface CatalogRelease {
   version: string;
@@ -31,14 +37,16 @@ export interface CatalogCategory {
 
 /** Read the generated apps.json from the shared _site output. */
 export async function loadApps(): Promise<CatalogApp[]> {
-  const path = fileURLToPath(new URL("../../../_site/api/v1/apps.json", import.meta.url));
-  return JSON.parse(await readFile(path, "utf8")) as CatalogApp[];
+  return JSON.parse(
+    await readFile(resolve(apiDir, "apps.json"), "utf8"),
+  ) as CatalogApp[];
 }
 
 /** Read the generated categories.json, flattening the English translation to a name. */
 export async function loadCategories(): Promise<CatalogCategory[]> {
-  const path = fileURLToPath(new URL("../../../_site/api/v1/categories.json", import.meta.url));
-  const raw = JSON.parse(await readFile(path, "utf8")) as {
+  const raw = JSON.parse(
+    await readFile(resolve(apiDir, "categories.json"), "utf8"),
+  ) as {
     id: string;
     translations: { en?: { name: string } };
   }[];
