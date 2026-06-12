@@ -17,6 +17,12 @@ const home = withBase(base, "");
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
+    {/* Favicons vendored from owncloud.com's official brand asset set. */}
+    <link rel="icon" type="image/x-icon" href={withBase(base, "favicon.ico")} sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href={withBase(base, "favicon-32x32.png")} />
+    <link rel="icon" type="image/png" sizes="16x16" href={withBase(base, "favicon-16x16.png")} />
+    <link rel="apple-touch-icon" sizes="180x180" href={withBase(base, "apple-touch-icon.png")} />
+    <link rel="manifest" href={withBase(base, "site.webmanifest")} />
     <meta name="theme-color" content="#041e42" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
