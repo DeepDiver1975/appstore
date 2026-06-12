@@ -18,7 +18,7 @@ function infoXml(id: string, version: string): string {
   return `<?xml version="1.0"?><info><id>${id}</id><name>App</name>
     <description>d</description><licence>AGPL</licence><author>me</author>
     <version>${version}</version><category>tools</category>
-    <dependencies><owncloud min-version="11.0.0" max-version="11.99.99"/></dependencies></info>`;
+    <dependencies><owncloud min-version="10.0.0" max-version="10.99.99"/></dependencies></info>`;
 }
 
 async function fixtureRepo(): Promise<string> {

@@ -10,7 +10,7 @@ afterEach(async () => {
   while (cleanups.length) await cleanups.pop()!();
 });
 
-function infoXml(id: string, version: string, category = "tools", minVersion = "11.0.0"): string {
+function infoXml(id: string, version: string, category = "tools", minVersion = "10.0.0"): string {
   return `<?xml version="1.0"?><info>
     <id>${id}</id><name>App</name><description>d</description>
     <licence>AGPL</licence><author>me</author><version>${version}</version>
@@ -53,24 +53,11 @@ describe("validateRelease", () => {
     await expect(validateRelease(ref)).rejects.toThrow(/category.*nonsense/i);
   });
 
-  it("accepts min-version 11.0.0", async () => {
-    const ref = await release("calendar", "2.1.0", infoXml("calendar", "2.1.0", "tools", "11.0.0"));
+  it("does NOT apply the platform floor (historical sub-11 releases stay valid)", async () => {
+    // The min-version floor is enforced on new submissions (check-changeset),
+    // not over the whole catalog — already-published min-10 releases are immutable.
+    const ref = await release("calendar", "2.1.0", infoXml("calendar", "2.1.0", "tools", "10.0.0"));
     const info = await validateRelease(ref);
-    expect(info.platformMin).toBe("11.0.0");
-  });
-
-  it("accepts a bare major min-version (11 / 11.0)", async () => {
-    const ref = await release("calendar", "2.1.0", infoXml("calendar", "2.1.0", "tools", "11"));
-    const info = await validateRelease(ref);
-    expect(info.platformMin).toBe("11");
-  });
-
-  it("rejects a min-version below 11", async () => {
-    const ref = await release(
-      "calendar",
-      "2.1.0",
-      infoXml("calendar", "2.1.0", "tools", "10.11.0"),
-    );
-    await expect(validateRelease(ref)).rejects.toThrow(/min-version.*11/i);
+    expect(info.platformMin).toBe("10.0.0");
   });
 });

@@ -12,3 +12,9 @@ export const BASE_URL = (
  * Extend as newer releases ship.
  */
 export const KNOWN_PLATFORM_VERSIONS = ["11.0.0"];
+
+/**
+ * Supported ownCloud platform floor. New releases must declare an owncloud
+ * min-version at or above this; enforced on submission (see validatePlatformFloor).
+ */
+export const MIN_PLATFORM_VERSION = "11.0.0";
