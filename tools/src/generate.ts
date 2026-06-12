@@ -66,7 +66,7 @@ export function buildApp(
     })),
     marketplace: `${baseUrl}/apps/${appId}`,
     downloads: 0,
-    rating: null,
+    rating: { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, mean: 0 },
     downloadable: true,
     publisher: { name: newest.author, url: "" },
     releases,

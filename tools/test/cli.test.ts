@@ -76,6 +76,25 @@ describe("CLI", () => {
     );
     const apps = JSON.parse(await readFile(join(out, "api/v1/apps.json"), "utf8"));
     expect(apps[0].id).toBe("calendar");
+    expect(apps[0].rating).toEqual({ "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, mean: 0 });
+  });
+
+  it("generate-api copies each release's package tarball into the served tree", async () => {
+    const root = await fixtureRepo();
+    const out = join(root, "_site");
+    await exec(
+      "npx",
+      ["tsx", "src/cli/generate-api.ts", "--apps", join(root, "apps"), "--out", out],
+      { cwd: toolsDir },
+    );
+
+    const copied = await readFile(
+      join(out, "apps", "calendar", "releases", "1.0.0", "package.tar.gz"),
+    );
+    const source = await readFile(
+      join(root, "apps", "calendar", "releases", "1.0.0", "package.tar.gz"),
+    );
+    expect(copied.equals(source)).toBe(true);
   });
 
   it("generate-api rewrites ingested screenshots to same-origin URLs and copies the files", async () => {

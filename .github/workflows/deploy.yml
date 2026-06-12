@@ -37,6 +37,14 @@ jobs:
         run: |
           (cd tools && npm ci)
           (cd website && npm ci)
+      # Ingest screenshots to disk before generating the API so a freshly
+      # published release has its screenshots on the FIRST deploy — without this,
+      # generate-api runs before ingest-screenshots.yml's commit lands and emits
+      # an empty screenshots array. Idempotent and best-effort: already-ingested
+      # releases are skipped and a dead URL never fails the build. Committing the
+      # files back into the repo stays the job of ingest-screenshots.yml.
+      - name: Ingest screenshots
+        run: cd tools && npx tsx src/cli/ingest-screenshots.ts --apps ../apps
       - name: Generate static API (re-validates all apps)
         env:
           MARKETPLACE_BASE_URL: ${{ steps.pages.outputs.base_url }}

@@ -26,7 +26,7 @@ describe("buildApp", () => {
     expect(app.id).toBe("calendar");
     expect(app.type).toBe("app");
     expect(app.downloads).toBe(0);
-    expect(app.rating).toBeNull();
+    expect(app.rating).toEqual({ "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, mean: 0 });
     expect(app.downloadable).toBe(true);
     // Screenshots are served same-origin from ingested files, not the info.xml URL.
     expect(app.screenshots).toEqual([

@@ -29,6 +29,21 @@ export interface ApiRelease {
   created: string; // ISO 8601
 }
 
+/**
+ * App rating, faithful to what market's ApiDataProvider expects: per-star vote
+ * counts (1..5) plus the mean. This is a static store with no user ratings, so
+ * every field is 0 — but the object must be present and well-formed (the client
+ * indexes into it), never null.
+ */
+export interface ApiRating {
+  "1": number;
+  "2": number;
+  "3": number;
+  "4": number;
+  "5": number;
+  mean: number;
+}
+
 /** An app entry in generated apps.json, faithful to market's ApiDataProvider. */
 export interface ApiApp {
   id: string;
@@ -39,7 +54,7 @@ export interface ApiApp {
   screenshots: { url: string }[];
   marketplace: string;
   downloads: number;
-  rating: null;
+  rating: ApiRating;
   downloadable: boolean;
   publisher: { name: string; url: string };
   releases: ApiRelease[];

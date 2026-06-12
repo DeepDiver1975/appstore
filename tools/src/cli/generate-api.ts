@@ -50,15 +50,21 @@ async function main(): Promise<void> {
 
   await writeApi(outDir, apps, KNOWN_PLATFORM_VERSIONS);
 
-  // Copy ingested screenshot files into the served tree so the same-origin URLs
-  // resolve: _site/apps/{id}/releases/{version}/screenshots/*.
+  // Copy each release's package tarball and ingested screenshots into the served
+  // tree so the absolute URLs in the API resolve same-origin:
+  //   _site/apps/{id}/releases/{version}/package.tar.gz
+  //   _site/apps/{id}/releases/{version}/screenshots/*
   for (const ref of refs) {
+    const releaseDir = join(outDir, "apps", ref.appId, "releases", ref.version);
+    await mkdir(releaseDir, { recursive: true });
+    await cp(ref.tarballPath, join(releaseDir, "package.tar.gz"));
+
     const files = screenshotsByRelease.get(`${ref.appId}@${ref.version}`) ?? [];
     if (files.length === 0) continue;
-    const destDir = join(outDir, "apps", ref.appId, "releases", ref.version, "screenshots");
-    await mkdir(destDir, { recursive: true });
+    const shotsDest = join(releaseDir, "screenshots");
+    await mkdir(shotsDest, { recursive: true });
     for (const file of files) {
-      await cp(join(screenshotsDir(ref.dir), file), join(destDir, file));
+      await cp(join(screenshotsDir(ref.dir), file), join(shotsDest, file));
     }
   }
 
