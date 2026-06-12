@@ -54,7 +54,7 @@ jobs:
           MARKETPLACE_SITE_URL: ${{ steps.pages.outputs.origin }}
           MARKETPLACE_BASE_PATH: ${{ steps.pages.outputs.base_path }}
         run: cd website && npm run build
-      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: _site
       - id: deploy
