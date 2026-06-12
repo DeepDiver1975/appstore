@@ -1,7 +1,7 @@
 name: Build and deploy
 on:
   push:
-    branches: [master]
+    branches: [main]
 
 permissions:
   contents: read
@@ -29,13 +29,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+      # Derive the published origin/base path from the running repo, so URLs are
+      # correct in any account or org without hardcoding a host.
+      - id: pages
+        uses: actions/configure-pages@v5
       - name: Install deps
         run: |
           (cd tools && npm ci)
           (cd website && npm ci)
       - name: Generate static API (re-validates all apps)
+        env:
+          MARKETPLACE_BASE_URL: ${{ steps.pages.outputs.base_url }}
         run: cd tools && npx tsx src/cli/generate-api.ts --apps ../apps --out ../_site
       - name: Build website
+        env:
+          MARKETPLACE_SITE_URL: ${{ steps.pages.outputs.origin }}
+          MARKETPLACE_BASE_PATH: ${{ steps.pages.outputs.base_path }}
         run: cd website && npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
