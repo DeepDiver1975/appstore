@@ -1,27 +1,420 @@
 ---
-import { loadApps } from "../../lib/catalog.ts";
+import Base from "../../layouts/Base.astro";
+import { loadApps, loadCategories, withBase } from "../../lib/catalog.ts";
 
 export async function getStaticPaths() {
   const apps = await loadApps();
-  return apps.map((app) => ({ params: { id: app.id }, props: { app } }));
+  const categories = await loadCategories();
+  return apps.map((app) => ({ params: { id: app.id }, props: { app, categories } }));
 }
 
-const { app } = Astro.props;
+const { app, categories } = Astro.props;
+const base = import.meta.env.BASE_URL;
+
+const categoryName = (id: string) =>
+  categories.find((c) => c.id === id)?.name ?? id;
+
+const latest = app.releases[0];
+const initial = app.name.trim().charAt(0).toUpperCase() || "?";
+
+const fmtDate = (iso: string) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? iso
+    : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+};
 ---
-<html lang="en">
-  <head><meta charset="utf-8" /><title>{app.name} — ownCloud Marketplace</title></head>
-  <body>
-    <h1>{app.name}</h1>
-    <p>{app.description}</p>
-    <p>By {app.publisher.name}</p>
-    <h2>Releases</h2>
-    <ul>
-      {app.releases.map((r) => (
-        <li>
-          v{r.version} (ownCloud {r.platformMin}–{r.platformMax}) —
-          <a href={r.download}>download</a>
-        </li>
-      ))}
-    </ul>
-  </body>
-</html>
+<Base title={`${app.name} — ownCloud Marketplace`} description={app.description}>
+  <nav class="breadcrumb container" aria-label="Breadcrumb">
+    <a href={withBase(base, "")}>Marketplace</a>
+    <span aria-hidden="true">/</span>
+    <a href={withBase(base, "#catalog")}>Apps</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{app.name}</span>
+  </nav>
+
+  <header class="app-hero">
+    <div class="container app-hero__inner">
+      <span class="app-hero__avatar" aria-hidden="true">{initial}</span>
+      <div class="app-hero__body">
+        <div class="app-hero__cats">
+          {app.categories.map((c) => <span class="tag">{categoryName(c)}</span>)}
+        </div>
+        <h1>{app.name}</h1>
+        <p class="app-hero__desc">{app.description}</p>
+        <div class="app-hero__by">
+          {
+            app.publisher.url ? (
+              <a href={app.publisher.url}>{app.publisher.name}</a>
+            ) : (
+              <span>{app.publisher.name}</span>
+            )
+          }
+          {latest && <span class="dot" aria-hidden="true">·</span>}
+          {latest && <span>Latest v{latest.version}</span>}
+        </div>
+        {
+          latest && (
+            <a class="btn-download" href={latest.download} rel="nofollow">
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                aria-hidden="true"
+              >
+                <path
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"
+                />
+              </svg>
+              Download v{latest.version}
+            </a>
+          )
+        }
+      </div>
+    </div>
+  </header>
+
+  <div class="app-layout container">
+    <div class="app-main">
+      {
+        app.screenshots.length > 0 && (
+          <section class="panel">
+            <h2>Screenshots</h2>
+            <div class="shots">
+              {app.screenshots.map((s, i) => (
+                <img
+                  src={s.url}
+                  alt={`${app.name} screenshot ${i + 1}`}
+                  loading="lazy"
+                  decoding="async"
+                />
+              ))}
+            </div>
+          </section>
+        )
+      }
+
+      <section class="panel">
+        <h2>Releases</h2>
+        <ul class="releases">
+          {
+            app.releases.map((r, i) => (
+              <li class="release">
+                <div class="release__head">
+                  <span class="release__version">v{r.version}</span>
+                  {i === 0 && <span class="release__badge">Latest</span>}
+                  <span class="release__date">{fmtDate(r.created)}</span>
+                </div>
+                <div class="release__facts">
+                  <span>
+                    ownCloud {r.platformMin} – {r.platformMax}
+                  </span>
+                  <span class="dot" aria-hidden="true">·</span>
+                  <span>{r.license}</span>
+                </div>
+                <a class="release__dl" href={r.download} rel="nofollow">
+                  Download package
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+    </div>
+
+    <aside class="app-side">
+      <div class="panel info">
+        <h2>Information</h2>
+        <dl>
+          <div>
+            <dt>Publisher</dt>
+            <dd>{app.publisher.name}</dd>
+          </div>
+          {
+            latest && (
+              <div>
+                <dt>License</dt>
+                <dd>{latest.license}</dd>
+              </div>
+            )
+          }
+          {
+            latest && (
+              <div>
+                <dt>Compatibility</dt>
+                <dd>
+                  ownCloud {latest.platformMin} – {latest.platformMax}
+                </dd>
+              </div>
+            )
+          }
+          <div>
+            <dt>Releases</dt>
+            <dd>{app.releases.length}</dd>
+          </div>
+          <div>
+            <dt>Categories</dt>
+            <dd class="info__cats">
+              {app.categories.map((c) => <span class="tag">{categoryName(c)}</span>)}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </aside>
+  </div>
+</Base>
+
+<style>
+  .breadcrumb {
+    display: flex;
+    gap: 9px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-top: 28px;
+    font-size: 0.88rem;
+    color: var(--oc-text-muted);
+  }
+  .breadcrumb a {
+    color: var(--oc-text-muted);
+  }
+  .breadcrumb a:hover {
+    color: var(--oc-primary-hover);
+  }
+  .breadcrumb [aria-current] {
+    color: var(--oc-brand);
+    font-weight: 600;
+  }
+
+  .app-hero {
+    margin-top: 24px;
+    background: linear-gradient(180deg, var(--oc-bg-highlight), var(--oc-bg));
+    border-block: 1px solid var(--oc-border);
+  }
+  .app-hero__inner {
+    display: flex;
+    gap: 28px;
+    padding-block: 44px;
+    align-items: flex-start;
+  }
+  .app-hero__avatar {
+    flex: none;
+    width: 84px;
+    height: 84px;
+    display: grid;
+    place-items: center;
+    border-radius: 18px;
+    font-weight: 700;
+    font-size: 2.3rem;
+    color: #fff;
+    background: linear-gradient(135deg, var(--oc-primary), var(--oc-brand));
+    box-shadow: var(--shadow-md);
+  }
+  .app-hero__body {
+    min-width: 0;
+  }
+  .app-hero__cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .app-hero h1 {
+    font-size: clamp(2rem, 4vw, 2.9rem);
+    font-weight: 700;
+    color: var(--oc-brand);
+    margin-bottom: 10px;
+  }
+  .app-hero__desc {
+    font-size: 1.12rem;
+    color: var(--oc-text-muted);
+    max-width: 60ch;
+    margin: 0 0 16px;
+  }
+  .app-hero__by {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 0.95rem;
+    color: var(--oc-text-muted);
+    margin-bottom: 24px;
+  }
+  .app-hero__by a {
+    color: var(--oc-primary-hover);
+    font-weight: 600;
+  }
+  .dot {
+    color: var(--oc-border-input);
+  }
+
+  .btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-weight: 600;
+    padding: 13px 26px;
+    border-radius: 999px;
+    background: var(--oc-brand);
+    color: #fff;
+    box-shadow: var(--shadow-md);
+    transition:
+      background 0.18s ease,
+      transform 0.18s ease;
+  }
+  .btn-download:hover {
+    background: var(--oc-brand-hover);
+    text-decoration: none;
+    transform: translateY(-2px);
+  }
+
+  .app-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 32px;
+    padding-top: 44px;
+    align-items: start;
+  }
+  @media (max-width: 880px) {
+    .app-layout {
+      grid-template-columns: 1fr;
+    }
+    .app-hero__inner {
+      flex-direction: column;
+      gap: 20px;
+    }
+  }
+
+  .app-main {
+    display: grid;
+    gap: 28px;
+    min-width: 0;
+  }
+  .panel {
+    background: var(--oc-bg);
+    border: 1px solid var(--oc-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 28px;
+  }
+  .panel h2 {
+    font-size: 1.25rem;
+    color: var(--oc-brand);
+    margin-bottom: 20px;
+  }
+
+  .shots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .shots img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--oc-border);
+    background: var(--oc-bg-muted);
+    display: block;
+  }
+
+  .releases {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 14px;
+  }
+  .release {
+    border: 1px solid var(--oc-border);
+    border-radius: var(--radius-sm);
+    padding: 18px 20px;
+    transition: border-color 0.18s ease;
+  }
+  .release:hover {
+    border-color: var(--oc-border-input);
+  }
+  .release__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .release__version {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 1.05rem;
+    color: var(--oc-brand);
+  }
+  .release__badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--oc-success);
+    color: #fff;
+  }
+  .release__date {
+    margin-left: auto;
+    font-size: 0.86rem;
+    color: var(--oc-text-muted);
+  }
+  .release__facts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--oc-text-muted);
+    margin-bottom: 12px;
+  }
+  .release__dl {
+    font-weight: 600;
+    font-size: 0.92rem;
+  }
+
+  .info dl {
+    margin: 0;
+    display: grid;
+    gap: 16px;
+  }
+  .info dt {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--oc-text-muted);
+    margin-bottom: 3px;
+  }
+  .info dd {
+    margin: 0;
+    color: var(--oc-text);
+    font-weight: 600;
+  }
+  .info__cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .app-side {
+    position: sticky;
+    top: 88px;
+  }
+  @media (max-width: 880px) {
+    .app-side {
+      position: static;
+    }
+  }
+
+  .tag {
+    font-size: 0.74rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--oc-bg-highlight);
+    color: var(--oc-primary-hover);
+  }
+</style>

@@ -24,8 +24,23 @@ export function withBase(base: string, path: string): string {
   return `${base.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
 }
 
+export interface CatalogCategory {
+  id: string;
+  name: string;
+}
+
 /** Read the generated apps.json from the shared _site output. */
 export async function loadApps(): Promise<CatalogApp[]> {
   const path = fileURLToPath(new URL("../../../_site/api/v1/apps.json", import.meta.url));
   return JSON.parse(await readFile(path, "utf8")) as CatalogApp[];
+}
+
+/** Read the generated categories.json, flattening the English translation to a name. */
+export async function loadCategories(): Promise<CatalogCategory[]> {
+  const path = fileURLToPath(new URL("../../../_site/api/v1/categories.json", import.meta.url));
+  const raw = JSON.parse(await readFile(path, "utf8")) as {
+    id: string;
+    translations: { en?: { name: string } };
+  }[];
+  return raw.map((c) => ({ id: c.id, name: c.translations.en?.name ?? c.id }));
 }
