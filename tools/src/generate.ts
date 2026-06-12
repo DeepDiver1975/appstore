@@ -7,6 +7,15 @@ import { toApiCategories } from "./categories.js";
 /** Provides the ISO-8601 created timestamp for a given appId/version. */
 export type CreatedProvider = (appId: string, version: string) => string;
 
+/**
+ * Provides the ingested screenshot file names for a given appId/version's
+ * release dir (e.g. ["01.png", "02.jpg"]), in stable sorted order. Returns an
+ * empty array when a release has not been ingested yet — screenshots are pinned
+ * into the repo by a separate step (see cli/ingest-screenshots), so a freshly
+ * published release legitimately has none until then.
+ */
+export type ScreenshotsProvider = (appId: string, version: string) => string[];
+
 function coerce(v: string): semver.SemVer {
   const c = semver.coerce(v);
   if (!c) throw new Error(`cannot parse version "${v}"`);
@@ -26,10 +35,16 @@ export function buildApp(
   appId: string,
   infos: AppInfo[],
   created: CreatedProvider,
+  screenshots: ScreenshotsProvider,
   baseUrl: string,
 ): ApiApp {
   const sorted = [...infos].sort((a, b) => byVersionDesc(a.version, b.version));
   const newest = sorted[0];
+  // Screenshots are served same-origin from the ingested files on disk (the
+  // info.xml URLs are the ingestion source, not what clients load — external
+  // origins would be blocked by the ownCloud client's image CSP). Empty until
+  // the release is ingested, which the website handles gracefully.
+  const screenshotFiles = screenshots(appId, newest.version);
 
   const releases: ApiRelease[] = sorted.map((info) => ({
     platformMin: info.platformMin,
@@ -46,7 +61,9 @@ export function buildApp(
     name: newest.name,
     categories: newest.categories,
     description: newest.description,
-    screenshots: newest.screenshots.map((url) => ({ url })),
+    screenshots: screenshotFiles.map((file) => ({
+      url: `${baseUrl}/apps/${appId}/releases/${newest.version}/screenshots/${file}`,
+    })),
     marketplace: `${baseUrl}/apps/${appId}`,
     downloads: 0,
     rating: null,

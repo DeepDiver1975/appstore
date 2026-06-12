@@ -25,3 +25,6 @@ jobs:
       - name: Validate all releases
         working-directory: tools
         run: npx tsx src/cli/validate.ts ../apps
+      - name: Validate screenshots on new releases
+        working-directory: tools
+        run: npx tsx src/cli/validate-screenshots.ts "origin/${{ github.base_ref }}"

@@ -8,6 +8,12 @@ export interface AppInfo {
   author: string;
   version: string;
   categories: string[];
+  /**
+   * Declared external screenshot URLs from info.xml. These are the *source* for
+   * ingestion (validation + download), NOT what clients load — screenshots are
+   * served same-origin from ingested files (see cli/ingest-screenshots and the
+   * ScreenshotsProvider in generate.ts).
+   */
   screenshots: string[];
   platformMin: string;
   platformMax: string;

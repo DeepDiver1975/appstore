@@ -27,7 +27,13 @@ const info: AppInfo = {
 describe("writeApi", () => {
   it("writes categories.json, bundles.json, apps.json and per-version files", async () => {
     out = await mkdtemp(join(tmpdir(), "api-"));
-    const app = buildApp("calendar", [info], () => "2026-06-11T00:00:00+00:00", "https://site");
+    const app = buildApp(
+      "calendar",
+      [info],
+      () => "2026-06-11T00:00:00+00:00",
+      () => [],
+      "https://site",
+    );
     await writeApi(out, [app], ["10.0.0", "11.0.0"]);
 
     const read = async (p: string) => JSON.parse(await readFile(join(out, p), "utf8"));
@@ -48,11 +54,44 @@ describe("writeApi", () => {
 
   it("is deterministic: re-running yields byte-identical apps.json", async () => {
     out = await mkdtemp(join(tmpdir(), "api-"));
-    const app = buildApp("calendar", [info], () => "2026-06-11T00:00:00+00:00", "https://site");
+    const app = buildApp(
+      "calendar",
+      [info],
+      () => "2026-06-11T00:00:00+00:00",
+      () => [],
+      "https://site",
+    );
     await writeApi(out, [app], ["10.0.0"]);
     const first = await readFile(join(out, "api/v1/apps.json"), "utf8");
     await writeApi(out, [app], ["10.0.0"]);
     const second = await readFile(join(out, "api/v1/apps.json"), "utf8");
     expect(second).toBe(first);
+  });
+});
+
+describe("buildApp screenshots", () => {
+  it("rewrites ingested screenshot files to same-origin URLs for the newest release", () => {
+    const app = buildApp(
+      "calendar",
+      [info],
+      () => "2026-06-11T00:00:00+00:00",
+      (id, version) => (id === "calendar" && version === "1.0.0" ? ["01.png", "02.jpg"] : []),
+      "https://site",
+    );
+    expect(app.screenshots).toEqual([
+      { url: "https://site/apps/calendar/releases/1.0.0/screenshots/01.png" },
+      { url: "https://site/apps/calendar/releases/1.0.0/screenshots/02.jpg" },
+    ]);
+  });
+
+  it("falls back to no screenshots when the release is not yet ingested", () => {
+    const app = buildApp(
+      "calendar",
+      [info],
+      () => "2026-06-11T00:00:00+00:00",
+      () => [],
+      "https://site",
+    );
+    expect(app.screenshots).toEqual([]);
   });
 });

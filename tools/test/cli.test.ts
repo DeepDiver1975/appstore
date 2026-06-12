@@ -1,11 +1,17 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { mkdtemp, mkdir, readFile, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { makeTarball } from "./helpers/make-tarball.js";
+
+// A tiny valid 1x1 PNG, standing in for an already-ingested screenshot file.
+const PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+  "base64",
+);
 
 const exec = promisify(execFile);
 const toolsDir = fileURLToPath(new URL("..", import.meta.url));
@@ -70,5 +76,30 @@ describe("CLI", () => {
     );
     const apps = JSON.parse(await readFile(join(out, "api/v1/apps.json"), "utf8"));
     expect(apps[0].id).toBe("calendar");
+  });
+
+  it("generate-api rewrites ingested screenshots to same-origin URLs and copies the files", async () => {
+    // Ingested screenshots live next to the package in the (immutable) release
+    // dir; build a temp tree with one so the published apps/ stays untouched.
+    const root = await fixtureRepo();
+    const shotsDir = join(root, "apps", "calendar", "releases", "1.0.0", "screenshots");
+    await mkdir(shotsDir, { recursive: true });
+    await writeFile(join(shotsDir, "01.png"), PNG);
+
+    const out = join(root, "_site");
+    await exec(
+      "npx",
+      ["tsx", "src/cli/generate-api.ts", "--apps", join(root, "apps"), "--out", out],
+      { cwd: toolsDir, env: { ...process.env, MARKETPLACE_BASE_URL: "https://site" } },
+    );
+
+    const apps = JSON.parse(await readFile(join(out, "api/v1/apps.json"), "utf8"));
+    expect(apps[0].screenshots).toEqual([
+      { url: "https://site/apps/calendar/releases/1.0.0/screenshots/01.png" },
+    ]);
+    const copied = await readFile(
+      join(out, "apps", "calendar", "releases", "1.0.0", "screenshots", "01.png"),
+    );
+    expect(copied.equals(PNG)).toBe(true);
   });
 });

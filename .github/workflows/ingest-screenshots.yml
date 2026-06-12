@@ -1,0 +1,50 @@
+name: Ingest screenshots
+# Downloads, re-validates, and commits app screenshots into the repo so they are
+# served same-origin (the ownCloud market client's image CSP blocks arbitrary
+# external origins). Runs on the protected branch — maintainer-triggered, or on
+# a publish push — never on PRs (fork PRs cannot be granted write access).
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    # Only new release packages can introduce new screenshots. The ingestion
+    # commit writes under screenshots/, which is excluded here, so it does not
+    # re-trigger this workflow.
+    paths: ["apps/**/releases/**/package.tar.gz"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ingest-screenshots
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          lfs: true
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install tools deps
+        working-directory: tools
+        run: npm ci
+      - name: Download, validate, and write screenshots
+        working-directory: tools
+        run: npx tsx src/cli/ingest-screenshots.ts --apps ../apps
+      - name: Commit ingested screenshots
+        run: |
+          git config user.name "owncloud-bot"
+          git config user.email "bot@users.noreply.github.com"
+          if [ -n "$(git status --porcelain apps)" ]; then
+            git add apps
+            git commit -m "chore: ingest validated app screenshots"
+            git push origin main
+          else
+            echo "No new screenshots to ingest."
+          fi

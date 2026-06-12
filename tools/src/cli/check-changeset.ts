@@ -17,12 +17,11 @@ const ADDED_PACKAGE_RE = /^apps\/[^/]+\/releases\/[^/]+\/package\.tar\.gz$/;
  * (the working tree), where checked-out files live.
  */
 async function enforcePlatformFloorOnAdded(
-  changed: ChangedPath[],
+  addedPackages: string[],
   repoRoot: string,
 ): Promise<void> {
-  for (const c of changed) {
-    if (c.status !== "A" || !ADDED_PACKAGE_RE.test(c.path)) continue;
-    const xml = await readInfoXmlFromTarball(join(repoRoot, c.path));
+  for (const path of addedPackages) {
+    const xml = await readInfoXmlFromTarball(join(repoRoot, path));
     validatePlatformFloor(parseInfoXml(xml));
   }
 }
@@ -53,6 +52,19 @@ export function parseNameStatus(stdout: string): ChangedPath[] {
     }
   }
   return changed;
+}
+
+/**
+ * Return the repo-relative paths of release packages newly **added** by the diff
+ * of `baseRef`...HEAD (status "A", matching `apps/{id}/releases/{version}/package.tar.gz`).
+ * Shared by both the platform-floor gate and screenshot validation so the
+ * "only new releases" rule is defined once.
+ */
+export async function addedPackagePaths(baseRef: string, cwd?: string): Promise<string[]> {
+  const { stdout } = await exec("git", ["diff", "--name-status", `${baseRef}...HEAD`], { cwd });
+  return parseNameStatus(stdout)
+    .filter((c) => c.status === "A" && ADDED_PACKAGE_RE.test(c.path))
+    .map((c) => c.path);
 }
 
 /**
@@ -100,7 +112,10 @@ async function main(): Promise<void> {
   // platform floor. Resolve the repo root so package paths (relative to it)
   // are readable regardless of the CLI's working directory.
   const repoRoot = (await exec("git", ["rev-parse", "--show-toplevel"])).stdout.trim();
-  await enforcePlatformFloorOnAdded(changed, repoRoot);
+  const addedPackages = changed
+    .filter((c) => c.status === "A" && ADDED_PACKAGE_RE.test(c.path))
+    .map((c) => c.path);
+  await enforcePlatformFloorOnAdded(addedPackages, repoRoot);
 
   console.log("Changeset OK: no immutability or collision violations.");
 }
