@@ -1,10 +1,10 @@
 name: Tools CI
 on:
   pull_request:
-    paths: ["tools/**", "website/**"]
+    paths: ["tools/**", "website/**", ".github/workflows/**"]
   push:
     branches: [main]
-    paths: ["tools/**", "website/**"]
+    paths: ["tools/**", "website/**", ".github/workflows/**"]
 
 env:
   ASTRO_TELEMETRY_DISABLED: "1"
@@ -35,3 +35,46 @@ jobs:
         run: |
           cd tools && npx tsx src/cli/generate-api.ts --apps ../apps --out ../_site
           cd ../website && npm run build
+      - name: Verify build output
+        run: |
+          test -s _site/index.html
+          test -d _site/api/v1
+          grep -q "Marketplace" _site/index.html || { echo "index.html looks empty/broken"; exit 1; }
+
+  # Exercise the GitHub Pages actions (configure-pages, upload-pages-artifact)
+  # at PR time using the same SHA pins as deploy.yml, so Dependabot bumps to
+  # those actions are validated before merge. Stops short of actions/deploy-pages
+  # — that needs pages:write/id-token and is inherently main-only (see deploy.yml).
+  pages-dryrun:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          lfs: true
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - id: pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+      - name: Install deps
+        run: |
+          (cd tools && npm ci)
+          (cd website && npm ci)
+      - name: Generate static API (re-validates all apps)
+        env:
+          MARKETPLACE_BASE_URL: ${{ steps.pages.outputs.base_url }}
+        run: cd tools && npx tsx src/cli/generate-api.ts --apps ../apps --out ../_site
+      - name: Build website
+        env:
+          MARKETPLACE_SITE_URL: ${{ steps.pages.outputs.origin }}
+          MARKETPLACE_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: cd website && npm run build
+      - name: Verify build output
+        run: |
+          test -s _site/index.html
+          test -d _site/api/v1
+          grep -q "Marketplace" _site/index.html || { echo "index.html looks empty/broken"; exit 1; }
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        with:
+          path: _site
