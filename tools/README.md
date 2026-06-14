@@ -17,6 +17,7 @@ npm ci
 - `npm run lint` / `npm run format:check`
 - `npx tsx src/cli/validate.ts ../apps` — validate every release
 - `npx tsx src/cli/generate-api.ts --apps ../apps --out ../_site` — build the API
+- `npx tsx src/cli/fetch-downloads.ts --out ../data/downloads.json` — refresh release download data
 
 ## Module map
 
@@ -25,6 +26,7 @@ npm ci
 - `scan.ts` — walk `apps/{appId}/releases/{version}/`
 - `validate.ts` — per-release rules + changeset immutability/collision rules
 - `generate.ts` — build the catalog and write `api/v1/**`
+- `downloads-generate.ts` — match release binaries, normalize and write `api/v1/downloads.json`
 - `created.ts` — git-backed release timestamps
 - `categories.ts` — the hardcoded, English-only category list
 

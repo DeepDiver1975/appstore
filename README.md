@@ -71,6 +71,7 @@ Served as static JSON from GitHub Pages:
 - `GET /api/v1/apps.json` — full catalog
 - `GET /api/v1/platform/{ocVersion}/apps.json` — back-compat with the `market` app
 - `GET /api/v1/bundles.json`
+- `GET /api/v1/downloads.json` — latest server, desktop and mobile release downloads
 
 ## Documentation
 
