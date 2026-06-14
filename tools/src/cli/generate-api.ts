@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { scanApps } from "../scan.js";
 import { validateRelease } from "../validate.js";
 import { buildApp, writeApi } from "../generate.js";
+import { readRawDownloads, writeDownloads } from "../downloads-generate.js";
 import { makeGitCreatedProvider } from "../created.js";
 import { listScreenshots, screenshotsDir } from "../screenshots.js";
 import { BASE_URL, KNOWN_PLATFORM_VERSIONS } from "../config.js";
@@ -20,6 +21,7 @@ function arg(name: string, fallback: string): string {
 async function main(): Promise<void> {
   const appsDir = arg("--apps", "apps");
   const outDir = arg("--out", "_site");
+  const downloadsData = arg("--downloads", "data/downloads.json");
 
   const refs = await scanApps(appsDir);
   const byApp = new Map<string, AppInfo[]>();
@@ -49,6 +51,16 @@ async function main(): Promise<void> {
     .sort((a, b) => a.id.localeCompare(b.id));
 
   await writeApi(outDir, apps, KNOWN_PLATFORM_VERSIONS);
+
+  // Emit api/v1/downloads.json from the committed raw release data, when present.
+  // The fetch step produces data/downloads.json; before it has ever run the
+  // build simply skips the downloads endpoint rather than failing.
+  const rawDownloads = await readRawDownloads(downloadsData);
+  if (rawDownloads) {
+    await writeDownloads(outDir, rawDownloads);
+  } else {
+    console.warn(`No ${downloadsData}; skipping downloads.json`);
+  }
 
   // Copy each release's package tarball and ingested screenshots into the served
   // tree so the absolute URLs in the API resolve same-origin:

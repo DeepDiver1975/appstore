@@ -1,3 +1,5 @@
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import type {
   RawAsset,
   RawRelease,
@@ -87,4 +89,32 @@ export function normalizeDownloads(raw: RawDownloads): Downloads {
     android: newestSurface(raw.android),
     ios: newestSurface(raw.ios),
   };
+}
+
+/**
+ * Read and parse the committed raw downloads file, or null when it is absent.
+ * The fetch step (cli/fetch-downloads) produces this file; the build degrades
+ * gracefully before it has ever run.
+ */
+export async function readRawDownloads(path: string): Promise<RawDownloads | null> {
+  let text: string;
+  try {
+    text = await readFile(path, "utf8");
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw err;
+  }
+  return JSON.parse(text) as RawDownloads;
+}
+
+/**
+ * Normalize the raw download data and write it to `outDir/api/v1/downloads.json`,
+ * deterministically (stable key order, trailing newline) so re-runs are
+ * byte-identical.
+ */
+export async function writeDownloads(outDir: string, raw: RawDownloads): Promise<void> {
+  const apiDir = join(outDir, "api", "v1");
+  await mkdir(apiDir, { recursive: true });
+  const data = normalizeDownloads(raw);
+  await writeFile(join(apiDir, "downloads.json"), JSON.stringify(data, null, 2) + "\n", "utf8");
 }
